@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Be Vietnam Pro", "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --color-primary: #3b82f6;
+  --color-vowel: #3b82f6;
+  --color-consonant: #ef4444;
+  --color-tone: #8b5cf6;
+  --color-success: #22c55e;
+  --color-bg: #fefce8;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-bg);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
