@@ -28,7 +28,8 @@ export default function useVoice() {
       let picked = null;
       const selectedName = voiceNameRef.current;
       if (selectedName) {
-        picked = viVoices.find((v) => v.name === selectedName) ||
+        picked =
+          viVoices.find((v) => v.name === selectedName) ||
           viVoices.find((v) => v.name.includes(selectedName));
       }
 
@@ -53,7 +54,7 @@ export default function useVoice() {
     const padded = " " + text + " ";
     const utterance = new SpeechSynthesisUtterance(padded);
     utterance.lang = "vi-VN";
-    utterance.rate = 0.8 * (rateRef.current || 1);
+    utterance.rate = 0.6 * (rateRef.current || 1);
     utterance.pitch = 1.1;
     if (voiceRef.current) utterance.voice = voiceRef.current;
 
@@ -94,7 +95,10 @@ export default function useVoice() {
     // Trick: phát utterance câm (volume 0) trước, rồi phát thật sau
     // Utterance đầu hấp thụ lỗi ghép vần / đọc tên chữ, utterance sau đọc đúng
     const needsDecoy =
-      phonetic === "ê" || phonetic === "i" || phonetic === "y" || phonetic === "pờ";
+      phonetic === "ê" ||
+      phonetic === "i" ||
+      phonetic === "y" ||
+      phonetic === "pờ";
 
     if (needsDecoy) {
       const decoy = new SpeechSynthesisUtterance(phonetic);
@@ -122,7 +126,13 @@ export default function useVoice() {
   }, []);
 
   const speakCongrats = useCallback(() => {
-    const phrases = ["Giỏi lắm!", "Tuyệt vời!", "Đúng rồi!", "Hay quá!"];
+    const phrases = [
+      "Bốp Giỏi lắm!",
+      "Bạn Bốp Tuyệt vời!",
+      "Bốp ơi đúng rồi!",
+      "Hay quá Bốp ơi!",
+      "Chính xác!",
+    ];
     const phrase = phrases[Math.floor(Math.random() * phrases.length)];
     speak(phrase);
   }, [speak]);

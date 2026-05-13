@@ -37,6 +37,16 @@ const ROUTES = [
     borderColor: "border-purple-400",
     bgLight: "bg-purple-50",
   },
+  {
+    id: "phonics",
+    path: "/phonics",
+    title: "Trò chơi",
+    desc: "Khu rừng khủng long",
+    color: "bg-pink-500",
+    textColor: "text-pink-700",
+    borderColor: "border-pink-400",
+    bgLight: "bg-pink-50",
+  },
 ];
 
 export default function Home() {
@@ -88,7 +98,7 @@ export default function Home() {
             <div
               className={`flex-shrink-0 w-14 h-14 rounded-xl ${route.color} text-white flex items-center justify-center text-2xl font-bold shadow`}
             >
-              {i + 1}
+              {i < 3 ? i + 1 : <span style={{ fontSize: 50 }}>🦖</span>}
             </div>
             <div className="flex-1 min-w-0">
               <div className={`text-lg font-bold ${route.textColor}`}>

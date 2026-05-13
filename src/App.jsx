@@ -5,6 +5,7 @@ import Basic from '@/pages/Basic/Basic'
 import Word from '@/pages/Advance/Word'
 import Level2 from '@/pages/Advance/Level2'
 import LevelPlaceholder from '@/pages/Advance/LevelPlaceholder'
+import Phonics from '@/pages/Phonics/Phonics'
 import Settings from '@/pages/Settings'
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/word" element={<Word />} />
           <Route path="/word/2" element={<Level2 />} />
           <Route path="/word/:levelId" element={<LevelPlaceholder />} />
+          <Route path="/phonics" element={<Phonics />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </div>

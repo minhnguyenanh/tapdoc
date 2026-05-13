@@ -6,6 +6,16 @@ function normalize(str) {
   return str.toLowerCase().trim().replace(/[.,!?;:\s]+/g, ' ').trim()
 }
 
+// Bỏ dấu thanh tiếng Việt + chuẩn hóa nguyên âm về dạng không dấu.
+// Giúp khớp khi STT trả về "trở", "trớ", "tro" cho cùng âm "trờ".
+function stripDiacritics(str) {
+  return str
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd')
+}
+
 function levenshtein(a, b) {
   const m = a.length, n = b.length
   const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0))
@@ -34,45 +44,87 @@ export default function useListening() {
   const isSupported = browserSupportsSpeechRecognition
 
   const startListening = useCallback(() => {
+    console.log('[STT] startListening called')
     resetTranscript()
     setResult(null)
     SpeechRecognition.startListening({ language: 'vi-VN', continuous: false })
   }, [resetTranscript])
 
   const stopListening = useCallback(() => {
+    console.log('[STT] stopListening called')
     SpeechRecognition.stopListening()
   }, [])
 
   const compare = useCallback((expected) => {
-    const normalExpected = normalize(expected)
+    const expectedList = Array.isArray(expected) ? expected : [expected]
     const normalTranscript = normalize(transcript)
-
+    console.log('[STT compare]', { transcript, normalTranscript, expectedList })
     if (!normalTranscript) return null
 
-    // Exact match
-    if (normalTranscript === normalExpected) return true
+    const strippedTranscript = stripDiacritics(normalTranscript)
+    const transcriptWords = [
+      ...normalTranscript.split(' '),
+      ...strippedTranscript.split(' '),
+    ]
 
-    // Transcript chứa expected
-    if (normalTranscript.includes(normalExpected)) return true
+    for (const exp of expectedList) {
+      const normalExpected = normalize(exp)
+      const strippedExpected = stripDiacritics(normalExpected)
+      const tolerance = strippedExpected.length <= 2 ? 0 : 1
 
-    // Fuzzy match: cho phép sai 1 ký tự
-    if (levenshtein(normalTranscript, normalExpected) <= 1) return true
+      // Exact / contains (cả 2 dạng có/không dấu)
+      if (
+        normalTranscript === normalExpected ||
+        normalTranscript.includes(normalExpected) ||
+        strippedTranscript === strippedExpected ||
+        strippedTranscript.includes(strippedExpected)
+      ) {
+        return true
+      }
 
-    // Kiểm tra từng từ trong transcript
-    const words = normalTranscript.split(' ')
-    for (const w of words) {
-      if (w === normalExpected || levenshtein(w, normalExpected) <= 1) return true
+      // Levenshtein toàn câu (đã strip dấu)
+      if (levenshtein(strippedTranscript, strippedExpected) <= tolerance) {
+        return true
+      }
+
+      // Từng từ. Chỉ cho startsWith khi expected đủ dài để tránh match nhầm
+      // (vd "chữ" startsWith "ch" sẽ pass mọi từ bắt đầu bằng ch).
+      const allowStartsWith = strippedExpected.length >= 3
+      for (const w of transcriptWords) {
+        if (!w) continue
+        const ws = stripDiacritics(w)
+        if (
+          w === normalExpected ||
+          ws === strippedExpected ||
+          (allowStartsWith && ws.startsWith(strippedExpected)) ||
+          levenshtein(ws, strippedExpected) <= tolerance
+        ) {
+          return true
+        }
+      }
     }
 
     return false
   }, [transcript])
 
-  // Tự động so sánh khi ngừng nghe và có transcript
+  // Tự động so sánh khi ngừng nghe
+  // Quan trọng: kể cả khi transcript rỗng cũng phải setResult(false) để UI
+  // báo cho user, thay vì im lặng (đó chính là cảm giác "đọc gì cũng không được").
+  const sawListeningRef = useRef(false)
   useEffect(() => {
-    if (!listening && transcript && expectedRef.current) {
-      const isCorrect = compare(expectedRef.current)
-      setResult(isCorrect)
+    console.log('[STT] listening effect', { listening, transcript, sawListening: sawListeningRef.current })
+    if (listening) {
+      sawListeningRef.current = true
+      return
     }
+    if (!sawListeningRef.current) return
+    sawListeningRef.current = false
+    if (!expectedRef.current) return
+    if (!transcript) {
+      setResult(false)
+      return
+    }
+    setResult(compare(expectedRef.current))
   }, [listening, transcript, compare])
 
   const setExpected = useCallback((word) => {
